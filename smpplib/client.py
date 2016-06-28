@@ -189,6 +189,28 @@ class Client(object):
 
         return True
 
+    def send_raw(self, hex_bytes):
+        """Send PDU to the SMSC"""
+
+        generated = binascii.a2b_hex(hex_bytes)
+
+        logger.debug('>>%s (%d bytes)', hex_bytes, len(generated))
+
+        sent = 0
+
+        while sent < len(generated):
+            sent_last = 0
+            try:
+                sent_last = self._socket.send(generated[sent:])
+            except socket.error, e:
+                logger.warning(e)
+                raise exceptions.ConnectionError()
+            if sent_last == 0:
+                raise exceptions.ConnectionError()
+            sent += sent_last
+
+        return True
+
     def read_pdu(self):
         """Read PDU from the SMSC"""
 
