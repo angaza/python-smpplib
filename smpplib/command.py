@@ -403,7 +403,7 @@ class BindTransmitter(Command):
 
     params = {
         'system_id': Param(type=str, max=16),
-        'password': Param(type=str, max=9),
+        'password': Param(type=str, max=17),
         'system_type': Param(type=str, max=13),
         'interface_version': Param(type=int, size=1),
         'addr_ton': Param(type=int, size=1),
