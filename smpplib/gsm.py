@@ -11,13 +11,15 @@ gsm = (u"@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%
        u"¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà")
 ext = (u"````````````````````^```````````````````{}`````\\````````````[~]`"
        u"|````````````````````````````````````€``````````````````````````")
+spa = (u"`````````ç``````````^```````````````````{}`````\\|Á``````````[~]`"
+       u"|Á```````Í`````Ó`````Ú```````````á```€```í`````ó`````ú``````````")
 
 
 class EncodeError(ValueError):
     """Raised if text cannot be represented in gsm 7-bit encoding"""
 
 
-def gsm_encode(plaintext, hex=False):
+def gsm_encode(plaintext, shift_set=ext, hex=False):
     """Replace non-GSM ASCII symbols"""
     res = ""
     for c in plaintext:
@@ -25,7 +27,7 @@ def gsm_encode(plaintext, hex=False):
         if idx != -1:
             res += chr(idx)
             continue
-        idx = ext.find(c)
+        idx = shift_set.find(c)
         if idx != -1:
             res += chr(27) + chr(idx)
             continue
@@ -33,10 +35,10 @@ def gsm_encode(plaintext, hex=False):
     return binascii.b2a_hex(res) if hex else res
 
 
-def make_parts(text):
+def make_parts(text, shift_set=ext):
     """Returns tuple(parts, encoding, esm_class)"""
     try:
-        text = gsm_encode(text)
+        text = gsm_encode(text, shift_set=shift_set)
         encoding = consts.SMPP_ENCODING_DEFAULT
         need_split = len(text) > consts.SEVENBIT_SIZE
         partsize = consts.SEVENBIT_MP_SIZE
@@ -65,6 +67,12 @@ def make_parts(text):
                                   encode(text[start:start + partsize]))))
             ipart += 1
     else:
-        parts = (encode(text),)
+        if shift_set == ext:
+            parts = (encode(text),)
+        else:
+            esm_class = consts.SMPP_GSMFEAT_UDHI
+
+            # XXX: hard-coded to spanish language character set for now
+            parts = (''.join(('\x03\x24\x01\x02', encode(text))),)
 
     return parts, encoding, esm_class
